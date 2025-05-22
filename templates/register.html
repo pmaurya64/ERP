@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head><title>Register</title></head>
+<body>
+<h2>Sign Up</h2>
+<form method="post">
+    Username: <input name="username" required><br>
+    Password: <input name="password" type="password" required><br>
+    Role: 
+    <select name="role">
+        <option value="admin">Admin</option>
+        <option value="user">User</option>
+    </select><br>
+    <input type="submit" value="Register">
+</form>
+<a href="{{ url_for('login') }}">Already have an account? Sign In</a>
+</body>
+</html>
+

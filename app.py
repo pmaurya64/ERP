@@ -1,9 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, session, g
 import sqlite3
+from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
-
 DATABASE = 'erp.db'
 
 def get_db():
@@ -15,47 +15,10 @@ def get_db():
 @app.teardown_appcontext
 def close_db(exception):
     db = g.pop('db', None)
-    if db is not None:
+    if db:
         db.close()
 
-# Simple user auth with role (just for example)
-users = {
-    'admin': {'password': 'admin123', 'role': 'admin'},
-    'user': {'password': 'user123', 'role': 'user'}
-}
-
-@app.route('/')
-def home():
-    if 'username' in session:
-        return redirect(url_for('dashboard'))
-    return render_template('login.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        user = users.get(username)
-        if user and user['password'] == password:
-            session['username'] = username
-            session['role'] = user['role']
-            return redirect(url_for('dashboard'))
-        return "Invalid credentials", 401
-    return render_template('login.html')
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('home'))
-
-@app.route('/dashboard')
-def dashboard():
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    return render_template('dashboard.html', username=session['username'], role=session['role'])
-
-# Role-based access decorator
-from functools import wraps
+# Role-based decorator
 def role_required(role):
     def wrapper(f):
         @wraps(f)
@@ -66,7 +29,53 @@ def role_required(role):
         return wrapped
     return wrapper
 
-# Inventory Module CRUD
+@app.route('/')
+def home():
+    if 'username' in session:
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('login'))
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        role = request.form['role']
+        db = get_db()
+        existing = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+        if existing:
+            return "User already exists", 400
+        db.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (username, password, role))
+        db.commit()
+        return redirect(url_for('login'))
+    return render_template('signup.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        db = get_db()
+        user = db.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password)).fetchone()
+        if user:
+            session['username'] = user['username']
+            session['role'] = user['role']
+            return redirect(url_for('dashboard'))
+        return "Invalid credentials", 401
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+@app.route('/dashboard')
+def dashboard():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    return render_template('dashboard.html', username=session['username'], role=session['role'])
+
+# Inventory
 @app.route('/inventory')
 def inventory():
     if 'username' not in session:
@@ -93,14 +102,14 @@ def delete_inventory(id):
     db.commit()
     return redirect(url_for('inventory'))
 
-# Employees Module CRUD
+# Employees
 @app.route('/employees')
 def employees():
     if 'username' not in session:
         return redirect(url_for('login'))
     db = get_db()
-    staff = db.execute("SELECT * FROM employees").fetchall()
-    return render_template('employees.html', employees=staff)
+    employees = db.execute("SELECT * FROM employees").fetchall()
+    return render_template('employees.html', employees=employees)
 
 @app.route('/employees/add', methods=['POST'])
 @role_required('admin')
@@ -120,14 +129,14 @@ def delete_employee(id):
     db.commit()
     return redirect(url_for('employees'))
 
-# Sales Module CRUD
+# Sales
 @app.route('/sales')
 def sales():
     if 'username' not in session:
         return redirect(url_for('login'))
     db = get_db()
-    sales_list = db.execute("SELECT * FROM sales").fetchall()
-    return render_template('sales.html', sales=sales_list)
+    sales = db.execute("SELECT * FROM sales").fetchall()
+    return render_template('sales.html', sales=sales)
 
 @app.route('/sales/add', methods=['POST'])
 @role_required('admin')

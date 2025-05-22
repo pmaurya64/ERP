@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Simple ERP</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <nav>
+    <a href="{{ url_for('dashboard') }}">Dashboard</a> |
+    <a href="{{ url_for('inventory') }}">Inventory</a> |
+    <a href="{{ url_for('employees') }}">Employees</a> |
+    <a href="{{ url_for('sales') }}">Sales</a> |
+    {% if session.get('username') %}
+      <a href="{{ url_for('logout') }}">Logout ({{ session.get('username') }})</a>
+    {% endif %}
+  </nav>
+  <hr>
+  {% block content %}{% endblock %}
+</body>
+</html>
+

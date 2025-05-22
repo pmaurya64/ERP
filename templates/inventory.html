@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Inventory</h2>
+{% if session.get('role') == 'admin' %}
+<form method="post" action="{{ url_for('add_inventory') }}">
+  <input type="text" name="name" placeholder="Item Name" required>
+  <input type="number" name="quantity" placeholder="Quantity" required>
+  <button type="submit">Add Item</button>
+</form>
+{% endif %}
+<ul>
+  {% for item in items %}
+  <li>{{ item.name }} - {{ item.quantity }}
+    {% if session.get('role') == 'admin' %}
+    <a href="{{ url_for('delete_inventory', id=item.id) }}">Delete</a>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}
+

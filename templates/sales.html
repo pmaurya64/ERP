@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Sales</h2>
+{% if session.get('role') == 'admin' %}
+<form method="post" action="{{ url_for('add_sale') }}">
+  <input type="text" name="item" placeholder="Item Sold" required>
+  <input type="number" name="amount" placeholder="Amount" required>
+  <button type="submit">Add Sale</button>
+</form>
+{% endif %}
+<ul>
+  {% for sale in sales %}
+  <li>{{ sale.item }} - {{ sale.amount }}
+    {% if session.get('role') == 'admin' %}
+    <a href="{{ url_for('delete_sale', id=sale.id) }}">Delete</a>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}
+

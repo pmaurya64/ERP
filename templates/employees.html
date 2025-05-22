@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Employees</h2>
+{% if session.get('role') == 'admin' %}
+<form method="post" action="{{ url_for('add_employee') }}">
+  <input type="text" name="name" placeholder="Employee Name" required>
+  <input type="text" name="role" placeholder="Role" required>
+  <button type="submit">Add Employee</button>
+</form>
+{% endif %}
+<ul>
+  {% for emp in employees %}
+  <li>{{ emp.name }} - {{ emp.role }}
+    {% if session.get('role') == 'admin' %}
+    <a href="{{ url_for('delete_employee', id=emp.id) }}">Delete</a>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}
+
